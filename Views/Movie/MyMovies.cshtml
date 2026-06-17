@@ -1,0 +1,106 @@
+@model List<Cinema.Api.Response.MyMoviesResponse>
+
+@{
+    ViewData["Title"] = "Мой прокат";
+}
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold text-primary">
+                <i class="bi bi-film text-warning me-2"></i>Мой прокат
+            </h1>
+            <p class="text-muted">Фильмы, которые вы добавили в свою коллекцию</p>
+        </div>
+        <span class="badge bg-primary fs-6 p-2">
+            <i class="bi bi-collection me-1"></i> @Model.Count фильмов
+        </span>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="display-1 text-muted mb-3">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3 class="text-muted">Ваша коллекция пока пуста</h3>
+            <p class="text-muted">Добавьте фильмы из популярных новинок!</p>
+            <a asp-controller="Movie" asp-action="MoviesFromTMDB" class="btn btn-primary btn-lg mt-3">
+                <i class="bi bi-search me-2"></i>Найти фильмы
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            @foreach (var movie in Model)
+            {
+                var posterUrl = string.IsNullOrEmpty(movie.posterPath) 
+                    ? "https://placehold.co/500x750?text=No+Poster" 
+                    : $"https://image.tmdb.org/t/p/w500{movie.posterPath}";
+                
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 transition-hover">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-success fw-bold fs-6 shadow">
+                                <i class="bi bi-check-circle-fill me-1"></i> В прокате
+                            </span>
+                        </div>
+                        
+                        <img src="@posterUrl" class="card-img-top rounded-top" alt="@movie.title" style="object-fit: cover; height: 380px;">
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold text-dark text-truncate" title="@movie.title">
+                                @movie.title
+                            </h5>
+                            
+                            <h6 class="card-subtitle mb-2 text-muted fst-italic text-truncate">
+                                @movie.originalTitle (@movie.originalLanguage.ToUpper())
+                            </h6>
+                            
+                            <p class="card-text text-muted small flex-grow-1 text-overflow-3">
+                                @(string.IsNullOrEmpty(movie.overview) ? "Описание отсутствует." : movie.overview)
+                            </p>
+                            
+                            <div class="mb-3 mt-2">
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-calendar3 me-1"></i> Релиз: @movie.releaseDate.ToString("dd MMMM yyyy")
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-star-fill text-warning me-1"></i> Рейтинг: @movie.voteAverage.ToString("0.0") (@movie.voteCount голосов)
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Длительность: @(movie.runtime / 60) ч @(movie.runtime % 60) мин
+                                </small>
+                            </div>
+                            
+                            <form asp-controller="Movie" asp-action="RemoveFromCinema" method="post">
+                                <input type="hidden" name="movieId" value="@movie.id" />
+                                <button type="submit" class="btn btn-outline-danger w-100 fw-semibold">
+                                    <i class="bi bi-x-circle me-1"></i> Убрать из проката
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .transition-hover {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .transition-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+    }
+    .text-overflow-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+    }
+</style>

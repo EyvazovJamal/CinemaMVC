@@ -14,4 +14,10 @@ public class MovieService(IMovieApi api) : IMovieService
     {
         return api.AddToCinema(tmdbMovieId);
     }
+
+    public async Task<List<MyMoviesResponse>> GetMyMoviesAsync()
+    {
+        var result = await api.GetMyMoviesAsync();
+        return result;
+    }
 }

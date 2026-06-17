@@ -6,4 +6,5 @@ public interface IMovieService
 {
     Task<List<MovieApiResponse>> GetMoviesFromTMDB();
     Task AddToCinema(int tmdbMovieId);
+    Task<List<MyMoviesResponse>> GetMyMoviesAsync();
 }

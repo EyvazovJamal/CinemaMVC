@@ -10,4 +10,6 @@ public interface IMovieApi
 
     [Post("/api/tmdb/addToCinema")]
     Task AddToCinema([Body]int tmdbMovieId);
+    [Post("/api/movies/filter")]
+    Task <List<MyMoviesResponse>>  GetMyMoviesAsync();
 }

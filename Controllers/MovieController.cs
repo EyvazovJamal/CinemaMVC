@@ -27,4 +27,15 @@ public class MovieController(IMovieService service) :Controller
         service.AddToCinema(movieId);
         return Json(new { success = true, message = "Фильм успешно добавлен в прокат!" });
     }
+
+    [HttpGet("/myMovies")]
+    public async Task<IActionResult> MyMovies()
+    {
+        var movies = await service.GetMyMoviesAsync();
+        foreach (var movie in movies)
+        {
+            Console.WriteLine(movie.runtime);
+        }
+        return View(movies);
+    }
 }
