@@ -73,7 +73,7 @@
                                     <i class="bi bi-clock me-1"></i>
                                     Длительность: @(movie.runtime / 60) ч @(movie.runtime % 60) мин
                                 </small>
-                            </div>
+                            </div>  
                             
                             <form asp-controller="Movie" asp-action="RemoveFromCinema" method="post">
                                 <input type="hidden" name="movieId" value="@movie.id" />

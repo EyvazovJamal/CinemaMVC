@@ -1,0 +1,263 @@
+@model Cinema.Models.ScheduleViewModel
+@{
+    ViewData["Title"] = "Расписание сеансов";
+    var dayStartHour = Model.DayStartHour;
+    var dayEndHour = Model.DayEndHour;
+    var totalMinutes = (dayEndHour - dayStartHour) * 60;
+
+    double TimeToPercent(DateTimeOffset time)
+    {
+        var minutes = time.Hour * 60 + time.Minute;
+        var startMinutes = dayStartHour * 60;
+        return Math.Clamp((minutes - startMinutes) * 100.0 / totalMinutes, 0, 100);
+    }
+
+    double DurationToPercent(int runtime, int buffer) =>
+        Math.Clamp((runtime + buffer) * 100.0 / totalMinutes, 0, 100);
+
+    string FormatTime(DateTimeOffset time) => time.ToString("HH:mm");
+}
+
+<link rel="stylesheet" href="~/css/schedule.css" asp-append-version="true" />
+
+<div class="schedule-page" style="--day-start-hour: @dayStartHour; --day-end-hour: @dayEndHour; --hour-count: @(dayEndHour - dayStartHour);">
+    <div class="schedule-toolbar">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Расписание залов</h1>
+            <p class="text-muted mb-0">Планируйте сеансы — система сама предложит время</p>
+        </div>
+        <form method="get" asp-action="Index" class="d-flex align-items-center gap-2">
+            <label for="date" class="form-label mb-0 text-muted">Дата:</label>
+            <input type="date" id="date" name="date" class="form-control"
+                   value="@Model.Date.ToString("yyyy-MM-dd")"
+                   onchange="this.form.submit()" />
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+    else if (!Model.Halls.Any())
+    {
+        <div class="alert alert-warning">
+            Залы не найдены. Создайте залы через MovieApi (<code>POST /api/hall/create</code>).
+        </div>
+    }
+    else
+    {
+        <div class="schedule-board">
+            <div class="schedule-grid">
+                <div class="schedule-time-header">
+                    <div class="schedule-corner"></div>
+                    @for (var hour = dayStartHour; hour < dayEndHour; hour++)
+                    {
+                        <div class="schedule-hour">@($"{hour:00}:00")</div>
+                    }
+                </div>
+
+                @foreach (var hall in Model.Halls)
+                {
+                    var hallScreenings = Model.GetScreeningsForHall(hall.Id).ToList();
+                    var addButtonLeft = hallScreenings.Count == 0
+                        ? 0.5
+                        : TimeToPercent(hallScreenings.Last().EndTime.AddMinutes(hallScreenings.Last().BufferMinutes));
+
+                    <div class="schedule-row">
+                        <div class="schedule-hall-label">@hall.Name</div>
+                        <div class="schedule-track" data-hall-id="@hall.Id" data-hall-name="@hall.Name">
+                            @foreach (var screening in hallScreenings)
+                            {
+                                var left = TimeToPercent(screening.StartTime);
+                                var width = DurationToPercent(screening.Runtime, screening.BufferMinutes);
+
+                                <div class="screening-block"
+                                     style="left: @left.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%;"
+                                     title="@screening.MovieTitle: @FormatTime(screening.StartTime) – @FormatTime(screening.EndTime)">
+                                    @screening.MovieTitle
+                                    <small>@FormatTime(screening.StartTime)</small>
+                                </div>
+                            }
+
+                            <button type="button"
+                                    class="add-screening-btn"
+                                    style="left: @addButtonLeft.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%;"
+                                    title="Добавить сеанс"
+                                    data-hall-id="@hall.Id"
+                                    data-hall-name="@hall.Name">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="schedule-legend">
+            <span><span class="legend-block"></span> Сеанс (длительность + 10 мин буфер)</span>
+            <span><strong>+</strong> — добавить следующий сеанс в зале</span>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="createScreeningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Новый сеанс</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Зал</label>
+                    <input type="text" class="form-control" id="modal-hall-name" readonly />
+                    <input type="hidden" id="modal-hall-id" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Начало сеанса</label>
+                    <input type="text" class="form-control" id="modal-start-time" readonly />
+                    <input type="hidden" id="modal-start-time-value" />
+                </div>
+                <div class="mb-3">
+                    <label for="modal-movie-id" class="form-label">Фильм</label>
+                    <select class="form-select" id="modal-movie-id">
+                        <option value="">— выберите фильм —</option>
+                        @foreach (var movie in Model.Movies)
+                        {
+                            <option value="@movie.id" data-runtime="@movie.runtime">
+                                @movie.title (@movie.runtime мин)
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div id="modal-end-preview" class="text-muted small"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="modal-confirm-btn">Добавить сеанс</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const scheduleDate = '@Model.Date.ToString("yyyy-MM-dd")';
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function updateEndPreview() {
+            const select = document.getElementById('modal-movie-id');
+            const startValue = document.getElementById('modal-start-time-value').value;
+            const preview = document.getElementById('modal-end-preview');
+
+            if (!select.value || !startValue) {
+                preview.textContent = '';
+                return;
+            }
+
+            const runtime = parseInt(select.selectedOptions[0].dataset.runtime, 10);
+            const start = new Date(startValue);
+            const end = new Date(start.getTime() + runtime * 60000);
+            const occupied = new Date(end.getTime() + 10 * 60000);
+
+            preview.textContent =
+                `Окончание: ${formatTime(end.toISOString())} (+ 10 мин буфер до ${formatTime(occupied.toISOString())})`;
+        }
+
+        document.querySelectorAll('.add-screening-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const hallId = btn.dataset.hallId;
+                const hallName = btn.dataset.hallName;
+
+                try {
+                    const response = await fetch(
+                        `/schedule/next-slot?hallId=${hallId}&date=${scheduleDate}`);
+                    const result = await response.json();
+
+                    if (!result.success) {
+                        throw new Error(result.message || 'Не удалось получить время');
+                    }
+
+                    const slot = result.data;
+                    document.getElementById('modal-hall-id').value = hallId;
+                    document.getElementById('modal-hall-name').value = hallName;
+                    document.getElementById('modal-start-time-value').value = slot.suggestedStartTime;
+                    document.getElementById('modal-start-time').value = formatTime(slot.suggestedStartTime);
+                    document.getElementById('modal-movie-id').value = '';
+                    document.getElementById('modal-end-preview').textContent = '';
+
+                    new bootstrap.Modal(document.getElementById('createScreeningModal')).show();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Ошибка',
+                        text: error.message || 'Не удалось подготовить сеанс',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 4000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        });
+
+        document.getElementById('modal-movie-id').addEventListener('change', updateEndPreview);
+
+        document.getElementById('modal-confirm-btn').addEventListener('click', async () => {
+            const movieId = document.getElementById('modal-movie-id').value;
+            const hallId = document.getElementById('modal-hall-id').value;
+            const startTime = document.getElementById('modal-start-time-value').value;
+
+            if (!movieId) {
+                Swal.fire({ icon: 'warning', title: 'Выберите фильм', toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+                return;
+            }
+
+            const btn = document.getElementById('modal-confirm-btn');
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('movieId', movieId);
+            formData.append('hallId', hallId);
+            formData.append('startTime', startTime);
+
+            try {
+                const response = await fetch('/schedule/create', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Не удалось создать сеанс');
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('createScreeningModal')).hide();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Готово!',
+                    text: result.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                }).then(() => window.location.reload());
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Упс...',
+                    text: error.message,
+                    toast: true,
+                    position: 'top-end',
+                    timer: 4000,
+                    showConfirmButton: false
+                });
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+}

@@ -1,5 +1,7 @@
+using System.Net;
 using Cinema.Services.Movie;
 using Microsoft.AspNetCore.Mvc;
+using Refit;
 
 namespace Cinema.Controllers;
 
@@ -22,10 +24,29 @@ public class MovieController(IMovieService service) :Controller
     }
 
     [HttpPost("/addToCinema")]
-    public IActionResult AddToCinema([FromForm] int movieId)
+    public async Task<IActionResult> AddToCinema([FromForm] int movieId)
     {
-        service.AddToCinema(movieId);
-        return Json(new { success = true, message = "Фильм успешно добавлен в прокат!" });
+        try
+        {
+            await service.AddToCinema(movieId);
+            return Json(new { success = true, message = "Фильм успешно добавлен в прокат!" });
+        }
+        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
+        {
+            var apiMessage = ex.Content?.Trim('"');
+            var message = apiMessage switch
+            {
+                "Movie already exists" => "Этот фильм уже добавлен в прокат.",
+                { Length: > 0 } text => text,
+                _ => "Этот фильм уже добавлен в прокат."
+            };
+
+            return Json(new { success = false, message });
+        }
+        catch (ApiException)
+        {
+            return Json(new { success = false, message = "Сервис фильмов временно недоступен. Попробуйте позже." });
+        }
     }
 
     [HttpGet("/myMovies")]

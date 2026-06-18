@@ -1,3 +1,4 @@
+using Cinema.Api.Requests;
 using Cinema.Api.Response;
 using Refit;
 
@@ -11,5 +12,5 @@ public interface IMovieApi
     [Post("/api/tmdb/addToCinema")]
     Task AddToCinema([Body]int tmdbMovieId);
     [Post("/api/movies/filter")]
-    Task <List<MyMoviesResponse>>  GetMyMoviesAsync();
+    Task<List<MyMoviesResponse>> GetMyMoviesAsync([Body] GetMoviesFilterRequest? filter = null);
 }

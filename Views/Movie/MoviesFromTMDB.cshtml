@@ -147,11 +147,10 @@
                 } catch (error) {
                     console.error(error); // Выводим ошибку в консоль браузера для отладки
 
-                    // Показываем КРАСНОЕ окно ошибки
                     Swal.fire({
                         icon: 'error',
                         title: 'Упс...',
-                        text: 'Не удалось добавить фильм в прокат (ошибка сервера).',
+                        text: error.message || 'Не удалось добавить фильм в прокат.',
                         toast: true,
                         position: 'top-end',
                         timer: 4000,
