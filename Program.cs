@@ -1,4 +1,6 @@
 using Cinema.Api;
+using Cinema.Common;
+using Cinema.Services.Hall;
 using Cinema.Services.Movie;
 using Cinema.Services.Schedule;
 using Refit;
@@ -14,6 +16,9 @@ builder.Services.AddSwaggerGen();
 var movieApiBaseUrl = builder.Configuration["MovieApiSettings:BaseUrl"]
                       ?? "http://localhost:5281";
 
+builder.Services.Configure<CinemaSettings>(builder.Configuration.GetSection(CinemaSettings.SectionName));
+builder.Services.AddSingleton<ICinemaTime, CinemaTimeService>();
+
 void ConfigureMovieApiClient(IHttpClientBuilder client) =>
     client.ConfigureHttpClient(c => c.BaseAddress = new Uri(movieApiBaseUrl));
 
@@ -23,6 +28,7 @@ ConfigureMovieApiClient(builder.Services.AddRefitClient<IScheduleApi>());
 
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IHallService, HallService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

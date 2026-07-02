@@ -21,32 +21,48 @@
 <link rel="stylesheet" href="~/css/schedule.css" asp-append-version="true" />
 
 <div class="schedule-page" style="--day-start-hour: @dayStartHour; --day-end-hour: @dayEndHour; --hour-count: @(dayEndHour - dayStartHour);">
-    <div class="schedule-toolbar">
+    <div class="schedule-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <h1 class="h3 fw-bold mb-1">Расписание залов</h1>
             <p class="text-muted mb-0">Планируйте сеансы — система сама предложит время</p>
         </div>
-        <form method="get" asp-action="Index" class="d-flex align-items-center gap-2">
-            <label for="date" class="form-label mb-0 text-muted">Дата:</label>
-            <input type="date" id="date" name="date" class="form-control"
-                   value="@Model.Date.ToString("yyyy-MM-dd")"
-                   onchange="this.form.submit()" />
-        </form>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <button type="button"
+                    id="repeat-yesterday-btn"
+                    class="btn btn-outline-secondary d-flex align-items-center gap-2"
+                    title="Скопировать все сеансы с предыдущего дня на выбранную дату">
+                <i class="bi bi-arrow-repeat"></i> Повторить вчерашние сеансы
+            </button>
+
+            <!-- Кнопка добавления зала, доступная всегда -->
+            <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#createHallModal">
+                <i class="bi bi-plus-circle"></i> Добавить зал
+            </button>
+
+            <form method="get" asp-action="Index" class="d-flex align-items-center gap-2">
+                <label for="date" class="form-label mb-0 text-muted">Дата:</label>
+                <input type="date" id="date" name="date" class="form-control"
+                       value="@Model.Date.ToString("yyyy-MM-dd")"
+                       onchange="this.form.submit()" />
+            </form>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
-        <div class="alert alert-danger">@Model.ErrorMessage</div>
+        <div class="alert alert-danger mt-3">@Model.ErrorMessage</div>
     }
     else if (!Model.Halls.Any())
     {
-        <div class="alert alert-warning">
-            Залы не найдены. Создайте залы через MovieApi (<code>POST /api/hall/create</code>).
+        <div class="alert alert-warning mt-3 d-flex justify-content-between align-items-center">
+            <div>
+                Залы не найдены. Вы можете создать зал прямо сейчас или использовать MovieApi (<code>POST /api/hall/create</code>).
+            </div>
         </div>
     }
     else
     {
-        <div class="schedule-board">
+        <div class="schedule-board mt-3">
             <div class="schedule-grid">
                 <div class="schedule-time-header">
                     <div class="schedule-corner"></div>
@@ -76,6 +92,7 @@
                                      title="@screening.MovieTitle: @FormatTime(screening.StartTime) – @FormatTime(screening.EndTime)">
                                     @screening.MovieTitle
                                     <small>@FormatTime(screening.StartTime)</small>
+                                    <button type="button" class="delete-screening-btn" data-id="@screening.Id" title="Удалить">×</button>
                                 </div>
                             }
 
@@ -100,6 +117,7 @@
     }
 </div>
 
+<!-- Модальное окно: Новый сеанс -->
 <div class="modal fade" id="createScreeningModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -140,14 +158,50 @@
     </div>
 </div>
 
+<!-- Модальное окно: Добавить зал (Через HTML Form) -->
+<div class="modal fade" id="createHallModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавление нового зала</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- Форма отправляет данные напрямую на ваш эндпоинт -->
+            <form action="/hall/create" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="hall-name" class="form-label">Название зала</label>
+                        <!-- Атрибут name должен строго совпадать с параметром 'string name' в контроллере -->
+                        <input type="text" class="form-control" id="hall-name" name="name" placeholder="Например: Синий зал, VIP" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="hall-capacity" class="form-label">Количество мест (сидений)</label>
+                        <!-- Атрибут name должен строго совпадать с параметром 'int seats' в контроллере -->
+                        <input type="number" class="form-control" id="hall-capacity" name="seats" min="1" placeholder="Например: 50" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Создать зал</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const scheduleDate = '@Model.Date.ToString("yyyy-MM-dd")';
+        const cinemaTimeZone = '@Model.TimeZoneId';
 
         function formatTime(isoString) {
-            const date = new Date(isoString);
-            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            return new Date(isoString).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: cinemaTimeZone
+            });
         }
 
         function updateEndPreview() {
@@ -168,6 +222,119 @@
             preview.textContent =
                 `Окончание: ${formatTime(end.toISOString())} (+ 10 мин буфер до ${formatTime(occupied.toISOString())})`;
         }
+
+        function formatDateRu(isoDate) {
+            const [year, month, day] = isoDate.split('-');
+            return `${day}.${month}.${year}`;
+        }
+
+        async function loadRepeatPreview() {
+            const btn = document.getElementById('repeat-yesterday-btn');
+            if (!btn) {
+                return null;
+            }
+
+            try {
+                const response = await fetch(`/schedule/repeat-preview?date=${scheduleDate}`);
+                const result = await response.json();
+
+                if (!result.success) {
+                    btn.disabled = true;
+                    btn.title = result.message || 'Не удалось проверить возможность копирования';
+                    return null;
+                }
+
+                const preview = result.data;
+                if (!preview.canRepeat) {
+                    btn.disabled = true;
+                    if (preview.targetHasScreenings) {
+                        btn.title = 'На выбранную дату уже есть сеансы';
+                    } else if (preview.sourceScreeningCount === 0) {
+                        btn.title = `На ${formatDateRu(preview.sourceDate)} не было сеансов`;
+                    } else {
+                        btn.title = 'Копирование недоступно';
+                    }
+                } else {
+                    btn.disabled = false;
+                    btn.title = `Скопировать ${preview.sourceScreeningCount} сеансов с ${formatDateRu(preview.sourceDate)}`;
+                }
+
+                return preview;
+            } catch {
+                btn.disabled = true;
+                btn.title = 'Не удалось проверить возможность копирования';
+                return null;
+            }
+        }
+
+        document.getElementById('repeat-yesterday-btn')?.addEventListener('click', async () => {
+            const btn = document.getElementById('repeat-yesterday-btn');
+            const preview = await loadRepeatPreview();
+
+            if (!preview?.canRepeat) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Копирование недоступно',
+                    text: btn.title,
+                    toast: true,
+                    position: 'top-end',
+                    timer: 4000,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            const confirmed = await Swal.fire({
+                icon: 'question',
+                title: 'Повторить вчерашние сеансы?',
+                html: `Будет скопировано <strong>${preview.sourceScreeningCount}</strong> сеансов<br>` +
+                    `с <strong>${formatDateRu(preview.sourceDate)}</strong> на <strong>${formatDateRu(preview.targetDate)}</strong>`,
+                showCancelButton: true,
+                confirmButtonText: 'Скопировать',
+                cancelButtonText: 'Отмена'
+            });
+
+            if (!confirmed.isConfirmed) {
+                return;
+            }
+
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('date', scheduleDate);
+
+            try {
+                const response = await fetch('/schedule/repeat-yesterday', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Не удалось скопировать сеансы');
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Готово!',
+                    text: result.message,
+                    timer: 2500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                }).then(() => window.location.reload());
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ошибка',
+                    text: error.message,
+                    toast: true,
+                    position: 'top-end',
+                    timer: 4000,
+                    showConfirmButton: false
+                });
+                await loadRepeatPreview();
+            }
+        });
+
+        loadRepeatPreview();
 
         document.querySelectorAll('.add-screening-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -258,6 +425,37 @@
             } finally {
                 btn.disabled = false;
             }
+        });
+        document.querySelectorAll('.delete-screening-btn').forEach(btn => {
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const id = btn.dataset.id;
+                if (!id) {
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('id', id);
+                try {
+                    const response = await fetch('/schedule/delete', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) {
+                        throw new Error('Не удалось удалить сеанс');
+                    }
+                    window.location.reload();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Ошибка',
+                        text: error.message || 'Не удалось удалить сеанс',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 4000,
+                        showConfirmButton: false
+                    });
+                }
+            });
         });
     </script>
 }

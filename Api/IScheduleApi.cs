@@ -14,4 +14,12 @@ public interface IScheduleApi
 
     [Post("/api/screening/create")]
     Task CreateScreeningAsync([Body] CreateScreeningRequest request);
+    [Post("/api/screening/delete")]
+    Task DeleteScreeningAsync([Body]Guid screeningId);
+
+    [Get("/api/screening/repeat-preview")]
+    Task<RepeatScreeningsPreviewResponse> GetRepeatPreviewAsync([Query] string targetDate);
+
+    [Post("/api/screening/repeat-from-date")]
+    Task<RepeatScreeningsResultResponse> RepeatFromDateAsync([Body] RepeatScreeningsRequest request);
 }

@@ -10,6 +10,7 @@ public class ScheduleViewModel
     public List<MyMoviesResponse> Movies { get; set; } = [];
     public int DayStartHour { get; set; } = 9;
     public int DayEndHour { get; set; } = 23;
+    public string TimeZoneId { get; set; } = "Asia/Baku";
     public string? ErrorMessage { get; set; }
 
     public IEnumerable<ScreeningResponse> GetScreeningsForHall(Guid hallId) =>

@@ -8,4 +8,6 @@ public interface IHallApi
 {
     [Post("/api/hall/filter")]
     Task<List<HallResponse>> GetHallsAsync([Body] GetMoviesFilterRequest? filter);
+    [Post("/api/hall/create")]
+    Task CreateHall([Body] CreateHallRequest filter);
 }

@@ -9,4 +9,7 @@ public interface IScheduleService
     Task<ScheduleViewModel> GetScheduleAsync(DateOnly date);
     Task<NextSlotResponse> GetNextSlotAsync(Guid hallId, DateOnly date);
     Task CreateScreeningAsync(CreateScreeningRequest request);
+    Task DeleteScreeningAsync(Guid id);
+    Task<RepeatScreeningsPreviewResponse> GetRepeatPreviewAsync(DateOnly targetDate);
+    Task<RepeatScreeningsResultResponse> RepeatFromDateAsync(DateOnly targetDate);
 }
