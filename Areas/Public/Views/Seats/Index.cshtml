@@ -1,0 +1,100 @@
+@model Cinema.Models.SeatSelectionViewModel
+@{
+    var map = Model.SeatMap;
+    var occupied = map.OccupiedSeats
+        .Select(s => $"{s.Row}-{s.Seat}")
+        .ToHashSet();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/seats.css" asp-append-version="true" />
+}
+
+<div class="container py-4">
+  @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+  {
+      <div class="alert alert-danger border-0">@Model.ErrorMessage</div>
+  }
+  else
+  {
+      <div class="seats-page">
+          <div class="mb-4">
+              <a href="javascript:history.back()" class="text-white-50 text-decoration-none small">
+                  <i class="bi bi-arrow-left me-1"></i> Назад
+              </a>
+              <h1 class="h3 text-white fw-bold mt-2 mb-1">@map.MovieTitle</h1>
+              <p class="text-white-50 mb-0">
+                  @map.StartTime.ToString("dd.MM.yyyy HH:mm") · @map.HallName
+              </p>
+          </div>
+
+          <div class="seats-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+              <div class="seats-legend d-flex flex-wrap gap-3">
+                  <span class="legend-item"><span class="legend-dot legend-available"></span> Свободно</span>
+                  <span class="legend-item"><span class="legend-dot legend-occupied"></span> Занято</span>
+                  <span class="legend-item"><span class="legend-dot legend-selected"></span> Выбрано</span>
+              </div>
+              <div class="text-white-50">
+                  Цена: <strong class="text-warning">@map.TicketPrice.ToString("0") ₼</strong> / место
+              </div>
+              <div class="seats-zoom">
+                  <button type="button" class="btn btn-sm btn-outline-light" id="zoom-out">−</button>
+                  <button type="button" class="btn btn-sm btn-outline-light" id="zoom-in">+</button>
+              </div>
+          </div>
+
+          <div class="seat-map-viewport public-card p-4">
+              <div class="seat-map-scale" id="seat-map-scale">
+                  <div class="seat-map" id="seat-map"
+                       data-screening-id="@map.ScreeningId"
+                       data-ticket-price="@map.TicketPrice">
+                      @foreach (var row in map.Rows)
+                      {
+                          <div class="seat-row">
+                              <span class="row-label">@row.RowNumber</span>
+                              <div class="seat-row-seats">
+                                  @for (var seat = 1; seat <= row.SeatCount; seat++)
+                                  {
+                                      var key = $"{row.RowNumber}-{seat}";
+                                      var isOccupied = occupied.Contains(key);
+                                      <button type="button"
+                                              class="seat @(isOccupied ? "seat-occupied" : "seat-available")"
+                                              data-row="@row.RowNumber"
+                                              data-seat="@seat"
+                                              @(isOccupied ? "disabled" : "")>
+                                          @seat
+                                      </button>
+                                  }
+                              </div>
+                          </div>
+                      }
+                  </div>
+              </div>
+              <div class="cinema-screen mt-4">ЭКРАН</div>
+          </div>
+
+          <div class="seats-checkout public-card p-4 mt-4">
+              <div class="row g-3 align-items-end">
+                  <div class="col-md-5">
+                      <label for="customer-name" class="form-label text-white-50">Ваше имя</label>
+                      <input type="text" id="customer-name" class="form-control" placeholder="Иван" required />
+                  </div>
+                  <div class="col-md-4">
+                      <div class="text-white-50 small mb-1">Выбрано:</div>
+                      <div id="selected-summary" class="text-white">Места не выбраны</div>
+                      <div id="selected-total" class="text-warning fw-bold mt-1">0 ₼</div>
+                  </div>
+                  <div class="col-md-3">
+                      <button type="button" id="book-btn" class="btn btn-public-primary w-100" disabled>
+                          <i class="bi bi-ticket-perforated me-1"></i> Забронировать
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+  }
+</div>
+
+@section Scripts {
+    <script src="~/js/seats.js" asp-append-version="true"></script>
+}

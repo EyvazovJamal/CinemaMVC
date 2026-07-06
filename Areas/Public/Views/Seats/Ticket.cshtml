@@ -1,0 +1,63 @@
+@model Cinema.Models.TicketViewModel
+@{
+    var booking = Model.Booking;
+}
+
+<div class="container py-5">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger border-0">@Model.ErrorMessage</div>
+    }
+    else
+    {
+        <div class="ticket-card public-card p-4 p-md-5 mx-auto" style="max-width: 560px;">
+            <div class="text-center mb-4">
+                <div class="display-6 text-warning mb-2"><i class="bi bi-ticket-perforated-fill"></i></div>
+                <h1 class="h3 text-white fw-bold mb-1">Билет оформлен</h1>
+                <p class="text-white-50 mb-0">№ @booking.Id.ToString()[..8].ToUpper()</p>
+            </div>
+
+            <hr class="border-secondary" />
+
+            <dl class="row mb-0 text-white-50">
+                <dt class="col-4">Фильм</dt>
+                <dd class="col-8 text-white">@booking.MovieTitle</dd>
+
+                <dt class="col-4">Зал</dt>
+                <dd class="col-8 text-white">@booking.HallName</dd>
+
+                <dt class="col-4">Сеанс</dt>
+                <dd class="col-8 text-white">@booking.StartTime.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                <dt class="col-4">Имя</dt>
+                <dd class="col-8 text-white">@booking.CustomerName</dd>
+
+                <dt class="col-4">Места</dt>
+                <dd class="col-8 text-white">
+                    @string.Join(", ", booking.Seats.Select(s => $"Ряд {s.Row}, место {s.Seat}"))
+                </dd>
+
+                <dt class="col-4">Сумма</dt>
+                <dd class="col-8 text-warning fw-bold fs-5">@booking.TotalPrice.ToString("0") ₼</dd>
+            </dl>
+
+            <div class="d-flex gap-2 mt-4">
+                <a href="/afisha" class="btn btn-outline-light flex-grow-1">На афишу</a>
+                <button type="button" class="btn btn-public-primary flex-grow-1" onclick="window.print()">
+                    Печать
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        @@media print {
+            .public-header, .public-footer, .btn { display: none !important; }
+            .public-body { background: #fff !important; color: #000 !important; }
+            .ticket-card { border: 2px solid #000 !important; }
+            .text-white, .text-white-50 { color: #000 !important; }
+        }
+    </style>
+}

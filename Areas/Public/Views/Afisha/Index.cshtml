@@ -1,0 +1,99 @@
+@model Cinema.Models.AfishaViewModel
+@{
+    ViewData["Title"] = "Афиша";
+}
+
+<section class="public-hero">
+    <div class="container text-center">
+        <h1 class="display-5 mb-3">Что идёт в кино</h1>
+        <p class="lead text-white-50 mb-0">Выбирай фильм и бронируй места онлайн</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger border-0">@Model.ErrorMessage</div>
+    }
+    else if (!Model.Movies.Any())
+    {
+        <div class="text-center py-5 public-card">
+            <div class="display-4 text-white-50 mb-3"><i class="bi bi-film"></i></div>
+            <h3 class="text-white">Сейчас нет фильмов в прокате</h3>
+            <p class="text-white-50 mb-4">Добавьте фильмы через админ-панель</p>
+            <a href="/schedule" class="btn btn-public-primary">
+                <i class="bi bi-gear me-1"></i> Перейти в админку
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-white-50">@Model.Movies.Count фильмов в прокате</span>
+            <a href="/today" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-calendar-event me-1"></i> Расписание на сегодня
+            </a>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            @foreach (var item in Model.Movies)
+            {
+                var movie = item.Movie;
+                var posterUrl = string.IsNullOrEmpty(movie.posterPath)
+                    ? "https://placehold.co/500x750/1a1a22/666?text=No+Poster"
+                    : $"https://image.tmdb.org/t/p/w500{movie.posterPath}";
+
+                <div class="col">
+                    <a href="/movie/@movie.id" class="text-decoration-none d-block h-100 afisha-card-link">
+                    <div class="public-card h-100">
+                        <img src="@posterUrl" class="w-100" alt="@movie.title"
+                             style="object-fit: cover; height: 360px;" />
+
+                        <div class="p-3 d-flex flex-column flex-grow-1">
+                            <h5 class="text-white fw-bold mb-1 text-truncate" title="@movie.title">@movie.title</h5>
+                            <p class="text-white-50 small mb-2">
+                                <i class="bi bi-star-fill text-warning me-1"></i>
+                                @movie.voteAverage.ToString("0.0")
+                                <span class="mx-2">·</span>
+                                <i class="bi bi-clock me-1"></i>
+                                @(movie.runtime / 60)ч @(movie.runtime % 60)м
+                            </p>
+
+                            @if (!string.IsNullOrEmpty(movie.overview))
+                            {
+                                <p class="text-white-50 small afisha-overview mb-3">@movie.overview</p>
+                            }
+
+                            @if (item.Screenings.Any())
+                            {
+                                <div class="mt-auto">
+                                    <small class="text-white-50 d-block mb-2">Сеансы сегодня:</small>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var screening in item.Screenings)
+                                        {
+                                            <span class="badge bg-warning text-dark px-2 py-2">
+                                                @screening.StartTime.ToString("HH:mm")
+                                                <span class="opacity-75">· @screening.HallName</span>
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <small class="text-white-50 mt-auto">
+                                    <i class="bi bi-info-circle me-1"></i> Сеансов на сегодня нет
+                                </small>
+                            }
+
+                            <span class="btn btn-public-primary btn-sm mt-3 w-100">
+                                <i class="bi bi-ticket-perforated me-1"></i> Смотреть сеансы
+                            </span>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>

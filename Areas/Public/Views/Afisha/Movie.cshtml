@@ -1,0 +1,97 @@
+@model Cinema.Models.MovieDetailViewModel
+@{
+    var movie = Model.Movie;
+    var posterUrl = string.IsNullOrEmpty(movie.posterPath)
+        ? "https://placehold.co/500x750/1a1a22/666?text=No+Poster"
+        : $"https://image.tmdb.org/t/p/w500{movie.posterPath}";
+
+    string FormatDayLabel(DateOnly date, DateOnly today)
+    {
+        if (date == today) return "Сегодня";
+        if (date == today.AddDays(1)) return "Завтра";
+        return date.ToString("dddd, dd MMMM");
+    }
+
+    var today = Model.Today;
+}
+
+<section class="public-hero movie-hero">
+    <div class="container">
+        <a href="/afisha" class="text-white-50 text-decoration-none small d-inline-block mb-3">
+            <i class="bi bi-arrow-left me-1"></i> Назад к афише
+        </a>
+
+        <div class="row g-4 align-items-start">
+            <div class="col-md-4 col-lg-3">
+                <img src="@posterUrl" alt="@movie.title" class="w-100 rounded-3 shadow movie-poster" />
+            </div>
+            <div class="col-md-8 col-lg-9">
+                <h1 class="display-6 fw-bold text-white mb-2">@movie.title</h1>
+                @if (!string.IsNullOrEmpty(movie.originalTitle) && movie.originalTitle != movie.title)
+                {
+                    <p class="text-white-50 fst-italic mb-3">@movie.originalTitle</p>
+                }
+
+                <div class="d-flex flex-wrap gap-3 text-white-50 mb-3">
+                    <span><i class="bi bi-star-fill text-warning me-1"></i> @movie.voteAverage.ToString("0.0")</span>
+                    <span><i class="bi bi-clock me-1"></i> @(movie.runtime / 60)ч @(movie.runtime % 60)м</span>
+                    @if (movie.releaseDate != default)
+                    {
+                        <span><i class="bi bi-calendar3 me-1"></i> @movie.releaseDate.ToString("yyyy")</span>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(movie.overview))
+                {
+                    <p class="text-white-50 mb-0">@movie.overview</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container py-5">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger border-0">@Model.ErrorMessage</div>
+    }
+    else if (!Model.Days.Any())
+    {
+        <div class="text-center py-5 public-card">
+            <div class="display-4 text-white-50 mb-3"><i class="bi bi-calendar-x"></i></div>
+            <h3 class="text-white">Ближайших сеансов нет</h3>
+            <p class="text-white-50">На ближайшие 7 дней сеансы для этого фильма не запланированы</p>
+        </div>
+    }
+    else
+    {
+        <h2 class="h4 text-white mb-4">
+            <i class="bi bi-ticket-perforated me-2 text-warning"></i> Расписание сеансов
+        </h2>
+
+        @foreach (var day in Model.Days)
+        {
+            <div class="movie-day-block mb-4">
+                <h3 class="h5 text-white mb-3">
+                    @FormatDayLabel(day.Date, today)
+                    <span class="text-white-50 fw-normal">· @day.Date.ToString("dd.MM.yyyy")</span>
+                </h3>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var screening in day.Screenings)
+                            {
+                                <a href="/screening/@screening.Id/seats"
+                                   class="screening-slot public-card px-3 py-2 d-flex align-items-center gap-2 text-decoration-none">
+                                    <span class="fw-bold text-warning fs-5">@screening.StartTime.ToString("HH:mm")</span>
+                                    <span class="text-white-50 small">
+                                        @screening.HallName
+                                        <span class="mx-1">·</span>
+                                        @screening.Runtime мин
+                                    </span>
+                                </a>
+                            }
+                        </div>
+            </div>
+        }
+    }
+</div>

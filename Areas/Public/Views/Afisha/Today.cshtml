@@ -1,0 +1,73 @@
+@model Cinema.Models.TodayViewModel
+@{
+    ViewData["Title"] = "Сегодня в кино";
+}
+
+<section class="public-hero">
+    <div class="container text-center">
+        <h1 class="display-5 mb-3">Сегодня в кино</h1>
+        <p class="lead text-white-50 mb-0">@Model.Date.ToString("dd MMMM yyyy")</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <a href="/afisha" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> К афише
+        </a>
+
+        <form method="get" action="/today" class="d-flex align-items-center gap-2">
+            <label for="date" class="text-white-50 small mb-0">Дата:</label>
+            <input type="date" id="date" name="date" class="form-control form-control-sm"
+                   value="@Model.Date.ToString("yyyy-MM-dd")"
+                   onchange="this.form.submit()" />
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger border-0">@Model.ErrorMessage</div>
+    }
+    else if (!Model.Screenings.Any())
+    {
+        <div class="text-center py-5 public-card">
+            <div class="display-4 text-white-50 mb-3"><i class="bi bi-calendar-x"></i></div>
+            <h3 class="text-white">На эту дату сеансов нет</h3>
+            <p class="text-white-50">Выберите другой день или добавьте сеансы в админке</p>
+            <a href="/schedule" class="btn btn-public-primary mt-2">
+                <i class="bi bi-gear me-1"></i> Расписание (админ)
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="public-card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle">
+                    <thead>
+                        <tr class="text-white-50">
+                            <th>Время</th>
+                            <th>Фильм</th>
+                            <th>Зал</th>
+                            <th>Длительность</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var screening in Model.Screenings)
+                        {
+                            <tr class="screening-row-link" onclick="window.location='/screening/@screening.Id/seats'" style="cursor:pointer">
+                                <td class="fw-bold text-warning">@screening.StartTime.ToString("HH:mm")</td>
+                                <td class="text-white">@screening.MovieTitle</td>
+                                <td class="text-white-50">@screening.HallName</td>
+                                <td class="text-white-50">
+                                    @screening.Runtime мин
+                                    <i class="bi bi-chevron-right ms-2 text-warning"></i>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

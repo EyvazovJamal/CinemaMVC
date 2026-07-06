@@ -1,5 +1,7 @@
 using Cinema.Api;
 using Cinema.Common;
+using Cinema.Services.Afisha;
+using Cinema.Services.Booking;
 using Cinema.Services.Hall;
 using Cinema.Services.Movie;
 using Cinema.Services.Schedule;
@@ -25,10 +27,13 @@ void ConfigureMovieApiClient(IHttpClientBuilder client) =>
 ConfigureMovieApiClient(builder.Services.AddRefitClient<IMovieApi>());
 ConfigureMovieApiClient(builder.Services.AddRefitClient<IHallApi>());
 ConfigureMovieApiClient(builder.Services.AddRefitClient<IScheduleApi>());
+ConfigureMovieApiClient(builder.Services.AddRefitClient<IBookingApi>());
 
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IHallService, HallService>();
+builder.Services.AddScoped<IAfishaService, AfishaService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -43,9 +48,11 @@ app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
 app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}"
-    );
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 
 

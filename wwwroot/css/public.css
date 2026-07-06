@@ -1,0 +1,135 @@
+:root {
+    --public-bg: #0f0f12;
+    --public-surface: #1a1a22;
+    --public-accent: #ffc107;
+    --public-accent-hover: #ffcd39;
+    --public-text: #f5f5f5;
+    --public-muted: #9ca3af;
+}
+
+.public-body {
+    background: var(--public-bg);
+    color: var(--public-text);
+    margin-bottom: 0;
+}
+
+.public-header {
+    background: linear-gradient(180deg, #14141a 0%, var(--public-bg) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.public-header .navbar-brand {
+    color: var(--public-accent);
+    font-size: 1.35rem;
+    letter-spacing: 0.02em;
+}
+
+.public-header .navbar-brand:hover {
+    color: var(--public-accent-hover);
+}
+
+.public-header .nav-link {
+    color: var(--public-muted);
+    font-weight: 500;
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.public-header .nav-link:hover,
+.public-header .nav-link.active {
+    color: var(--public-text);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.public-admin-link {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.public-main {
+    padding: 0;
+}
+
+.public-footer {
+    background: var(--public-surface);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.public-hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f12 100%);
+    padding: 3rem 0 4rem;
+}
+
+.public-hero h1 {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.public-card {
+    background: var(--public-surface);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.public-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.btn-public-primary {
+    background: var(--public-accent);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.25rem;
+}
+
+.btn-public-primary:hover {
+    background: var(--public-accent-hover);
+    color: #000;
+}
+
+.public-admin-btn {
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.public-header .nav-link.active {
+    color: var(--public-accent) !important;
+    background: rgba(255, 193, 7, 0.12);
+}
+
+.afisha-overview {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.afisha-card-link:hover .public-card {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.movie-hero {
+    padding-bottom: 2rem;
+}
+
+.movie-poster {
+    max-height: 480px;
+    object-fit: cover;
+}
+
+.movie-day-block .screening-slot {
+    min-width: 160px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.movie-day-block .screening-slot:hover {
+    border-color: rgba(255, 193, 7, 0.4) !important;
+    background: rgba(255, 193, 7, 0.06);
+}
